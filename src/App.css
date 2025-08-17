@@ -1,0 +1,9 @@
+body{
+  margin: 0;
+  padding: 0;
+  font-family: roboto;
+  
+}
+html, body {
+  overflow: hidden; /* hides both vertical and horizontal scrollbars */
+}
