@@ -1,3 +1,18 @@
+/* Reset and base styles */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Roboto, Arial, sans-serif;
+  overflow: hidden; /* Disable page scroll */
+}
+
+/* ===== DESKTOP VIEW ===== */
 .right-panel {
   background: #d6e6fa;
   flex: 1;
@@ -7,38 +22,88 @@
   justify-content: center;
   text-align: center;
   padding: 2rem;
-  height: 110vh;
+  height: 100vh;
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow: hidden;          /* Disable internal scroll */
+  position: relative;        /* For absolute positioning inside */
+}
 
-}
-body{
-  margin: 0;
-  padding: 0;
-}
 .right-panel .illustration {
-  width: 626px;
-  height: 313px;
-  margin-top: -30px;
+  width: 480px;
+  max-width: 90vw;
+  height: auto;
+  margin-top: 0;
 }
 
-.right-panel .lock-text {
-  margin-top: 890px;
-  margin-bottom: 50px; /* Optional: to add some space from the bottom */
-  font-size: 22px;
-  position: fixed;
-
+.lock-text {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  text-align: center;
+  font-size: 22px; /* default font size for desktop */
 }
 
 .right-panel h1 {
-  font-family: roboto, sans-serif;
+  font-family: Roboto, Arial, sans-serif;
   font-weight: bold;
-  font-size: 50px;
-  margin-top: -20px;
+  font-size: 44px;
+  margin-top: 0;
+  margin-bottom: 24px;
 }
 
 .right-panel p {
   font-size: 22px;
   font-weight: 500;
-  letter-spacing: 0.02em; /* fixed from 2% */
-  margin-top: -20px;
-  margin-bottom: 100px;
+  letter-spacing: 0.02em;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+/* ===== MOBILE RESPONSIVENESS ===== */
+@media (max-width: 600px) {
+  .right-panel {
+    padding: 4vw 1vw;
+    height: auto;
+    min-height: 100vh;
+  }
+  .right-panel .illustration {
+    width: 88vw;
+    height: auto;
+    margin-top: -15px;
+  }
+  .lock-text {
+    position: relative;  /* remove absolute on mobile */
+    bottom: auto;
+    left: auto;
+    transform: none;
+    width: auto;
+    margin-top: 10vh;
+    font-size: 16px;
+  }
+  .right-panel h1 {
+    font-size: 8vw;
+    margin-top: 2vw;
+    margin-bottom: 4vw;
+  }
+  .right-panel p {
+    font-size: 5vw;
+    margin-top: 1vw;
+    margin-bottom: 12vw;
+  }
+}
+
+/* ===== EXTREME SMALL DEVICES ===== */
+@media (max-width: 400px) {
+  .right-panel h1 {
+    font-size: 7vw;
+  }
+  .lock-text {
+    font-size: 14px;
+  }
+  .right-panel p {
+    font-size: 4vw;
+  }
 }

@@ -1,71 +1,40 @@
 import React, { useState, useEffect } from "react";
-
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-
-
-
+import { Routes, Route, useLocation } from "react-router-dom";
 import Addnote from "./Components/Addnote";
-
 import Sidepanel from "./Components/Sidepanel";
-
 import Maincontent from "./Components/Maincontent";
 
-
-
 function App() {
-
   const location = useLocation();
-
-  const isGroupSelected = location.pathname.startsWith("/group/");
-
-
-
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 360);
-
-
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
 
   useEffect(() => {
-
-    const handleResize = () => setIsMobile(window.innerWidth <= 360);
-
+    const handleResize = () => setIsMobile(window.innerWidth <= 600);
     window.addEventListener("resize", handleResize);
-
     return () => window.removeEventListener("resize", handleResize);
-
   }, []);
 
-
+  // Determine if viewing a group
+  const isGroupRoute = /^\/group\/\d+$/.test(location.pathname);
 
   return (
-
-    <div className="app-container" style={{ display: "flex", height: "100vh" }}>
-
-      {/* Sidepanel: always visible on desktop, only visible on mobile if group not selected */}
-
-      {(!isMobile || (isMobile && !isGroupSelected)) && <Sidepanel />}
-
-
-
-      <div className="main-content" style={{ flex: 1 }}>
-
+    <div className="container" style={{ display: "flex", minHeight: "100vh" }}>
+      <Sidepanel />
+      <div style={{ flex: 1, position: "relative" }}>
         <Routes>
-
-          {/* Load Maincontent ONLY if not mobile */}
-
-          {!isMobile && <Route path="/" element={<Maincontent />} />}
-
+          {/* Route for group: show chat/messages (Addnote), nothing else */}
           <Route path="/group/:id" element={<Addnote />} />
-
+          {/* Route for home/root: show Maincontent (illustration) */}
+          <Route path="/" element={!isMobile ? <Maincontent /> : null} />
+          {/* Add other routes as needed */}
         </Routes>
-
       </div>
 
+
+      
     </div>
-
   );
-
 }
 
-
-
 export default App;
+

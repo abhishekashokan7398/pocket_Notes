@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import "react-responsive-modal/styles.css"; // ✅ required styles
+import "react-responsive-modal/styles.css";
 import { Modal } from "react-responsive-modal";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../styles/sidepanel.css";
+
+// ... imports remain the same
 
 export default function Sidepanel() {
   const [groups, setGroups] = useState([]);
@@ -22,94 +24,90 @@ export default function Sidepanel() {
 
   const navigate = useNavigate();
   const location = useLocation();
-
   const colors = ["#a98ff5", "#ff70d9", "#63e3f2", "#f2a873", "#0047FF", "#6691FF"];
 
+  /** Responsive watcher */
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  /** Load groups from storage on mount */
   useEffect(() => {
     const storedGroups = localStorage.getItem("groups");
     if (storedGroups) setGroups(JSON.parse(storedGroups));
   }, []);
 
+  /** Scrollbar update when groups change */
   useEffect(() => {
     updateScrollbarVisibility();
   }, [groups]);
 
-  const getInitials = (name) => {
+  function getInitials(name) {
     const words = name.trim().split(" ").filter(Boolean);
     return words.slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-  };
+  }
 
-  const updateScrollbarVisibility = () => {
+  function updateScrollbarVisibility() {
     const list = listRef.current;
     if (!list) return;
     setShowScrollbar(list.scrollHeight > list.clientHeight);
-  };
+  }
 
-  const handleCreateGroup = () => {
+  function handleCreateGroup() {
     const trimmedName = groupName.trim();
     if (!trimmedName) return toast.error("Please enter a group name");
     if (!selectedColor) return toast.error("Please select a color");
-
     const duplicate = groups.some(
       (g) => g.name.toLowerCase() === trimmedName.toLowerCase()
     );
     if (duplicate) return toast.warning("Group name already exists.");
-
     const newGroup = {
       id: Date.now(),
       name: trimmedName,
       color: selectedColor,
       initials: getInitials(trimmedName),
     };
-
     setGroups((prev) => {
       const updated = [...prev, newGroup];
       localStorage.setItem("groups", JSON.stringify(updated));
       return updated;
     });
-
     setGroupName("");
     setSelectedColor("");
-    setOpen(false); // ✅ closes modal after create
+    setOpen(false);
     toast.success("Group created successfully!");
     setTimeout(updateScrollbarVisibility, 0);
-  };
+  }
 
-  const handleGroupClick = (groupId) => {
+  function handleGroupClick(groupId) {
     navigate(`/group/${groupId}`);
-  };
+  }
 
-  const handleScroll = () => {
+  // Custom scrollbar events
+  function handleScroll() {
     const list = listRef.current;
     if (!list) return;
-
     const thumbHeight = 40;
     const scrollableHeight = list.scrollHeight - list.clientHeight;
     const scrollRatio = list.scrollTop / scrollableHeight;
-
     const trackHeight = isMobile ? window.innerHeight - 60 : list.clientHeight;
     const maxThumbTop = trackHeight - thumbHeight;
     const newThumbTop = scrollRatio * maxThumbTop;
-
     setThumbTop(`${Math.min(newThumbTop, maxThumbTop)}px`);
-  };
+  }
 
-  const handleThumbMouseDown = (e) => {
+  function handleThumbMouseDown(e) {
     e.preventDefault();
     isDragging.current = true;
     startY.current = e.clientY;
     startScrollTop.current = listRef.current.scrollTop;
     document.addEventListener("mousemove", handleThumbMouseMove);
     document.addEventListener("mouseup", handleThumbMouseUp);
-  };
+  }
 
-  const handleThumbMouseMove = (e) => {
+  function handleThumbMouseMove(e) {
     if (!isDragging.current) return;
     const list = listRef.current;
     const deltaY = e.clientY - startY.current;
@@ -118,123 +116,108 @@ export default function Sidepanel() {
     let newScrollTop = startScrollTop.current + deltaY * scrollRatio;
     newScrollTop = Math.max(0, Math.min(newScrollTop, maxScroll));
     list.scrollTop = newScrollTop;
-  };
+  }
 
-  const handleThumbMouseUp = () => {
+  function handleThumbMouseUp() {
     isDragging.current = false;
     document.removeEventListener("mousemove", handleThumbMouseMove);
     document.removeEventListener("mouseup", handleThumbMouseUp);
-  };
+  }
 
+  // Highlight active group by ID from URL
   const activeGroupId = location.pathname.startsWith("/group/")
     ? parseInt(location.pathname.split("/group/")[1])
     : null;
 
+  // 👇 Detect if we're inside a group page (for mobile only)
+  const isGroupPage = isMobile && location.pathname.startsWith("/group/");
+
   return (
-    <div
-      className="side"
-      style={
-        isMobile
-          ? { width: "100%", height: "100vh", position: "fixed", top: 0, left: 0, zIndex: 1000 }
-          : {}
-      }
-    >
+    <div className="side">
       <h2>Pocket Notes</h2>
-
-      <div style={{ position: "relative", flex: 1 }}>
-        <div className="group-list" ref={listRef} onScroll={handleScroll}>
-          {groups.map((group) => {
-            const isActive = group.id === activeGroupId;
-            return (
-              <div
-                key={group.id}
-                className={`group-item ${isActive ? "active" : ""}`}
-                onClick={() => handleGroupClick(group.id)}
-              >
-                <div className="group-circle" style={{ background: group.color }}>
-                  {group.initials}
-                </div>
-                <span className="group-name">{group.name}</span>
-              </div>
-            );
-          })}
-        </div>
-
-        {showScrollbar && (
-          <div
-            className="custom-scrollbar-track"
-            style={{
-              position: "fixed",
-              right: isMobile ? "0px" : "78%",
-              top: isMobile ? "60px" : "130px",
-              height: isMobile ? `calc(100vh - 60px)` : `calc(100vh - 130px)`,
-              width: "12px",
-              background: "#ccc",
-              borderRadius: "8px",
-              zIndex: 9999,
-            }}
-          >
-            <div
-              className="custom-scrollbar-thumb"
-              style={{ top: thumbTop }}
-              onMouseDown={handleThumbMouseDown}
-            />
-          </div>
-        )}
-      </div>
-
-      <button className="add-btn" onClick={() => setOpen(true)}>+</button>
-
-      {/* Single Modal */}
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}       // ✅ close on overlay/Escape
-        center
-        closeOnOverlayClick={true}           // ✅ clicking outside closes
-        showCloseIcon={false}
-        focusTrapped={false}
-        classNames={{
-          overlay: "rrm-overlay-fix",        // ✅ raise overlay z-index
-          modal: "custom-modal-wrapper"
+      <div
+        className="group-list"
+        ref={listRef}
+        onScroll={handleScroll}
+        style={{
+          height: isMobile ? "calc(100vh - 120px)" : undefined,
         }}
       >
-        <div className="custom-modal">
-          <h3 className="modal-title">Create New Group</h3>
-
-          <div className="form-row">
-            <label>Group Name</label>
-            <input
-              type="text"
-              placeholder="Enter group name"
-              className="modal-input"
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
-            />
-          </div>
-
-          <div className="form-row color-row">
-            <label>Choose Colour</label>
-            <div className="color-options">
-              {colors.map((color, index) => (
-                <div
-                  key={index}
-                  className={`color-circle ${selectedColor === color ? "selected" : ""}`}
-                  style={{ background: color }}
-                  onClick={() => setSelectedColor(color)}
-                />
-              ))}
+        {groups.map((group) => (
+          <div
+            className={`group-item${activeGroupId === group.id ? " active" : ""}`}
+            key={group.id}
+            onClick={() => handleGroupClick(group.id)}
+          >
+            <div className="group-circle" style={{ background: group.color }}>
+              {group.initials}
             </div>
+            <div className="group-name">{group.name}</div>
           </div>
+        ))}
+      </div>
 
-          <div className="button-row">
-            <button className="create-btn" type="button" onClick={handleCreateGroup}>
-              Create
-            </button>
+      {/* Custom scrollbar (hidden in mobile group page) */}
+      {showScrollbar && !isGroupPage && (
+        <div className="custom-scrollbar-track">
+          <div
+            className="custom-scrollbar-thumb"
+            style={{ top: thumbTop }}
+            onMouseDown={handleThumbMouseDown}
+          />
+        </div>
+      )}
+
+      {/* Add Group Floating Button (hidden in mobile group page) */}
+      {!isGroupPage && (
+        <button className="add-btn" title="Add Group" onClick={() => setOpen(true)}>
+          +
+        </button>
+      )}
+
+      {/* Add Group Modal */}
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        center
+        classNames={{ modal: "custom-modal" }}
+        showCloseIcon={false}
+        aria-labelledby="modal-title"
+      >
+        <div className="modal-title">Create New Group</div>
+        <div className="form-row">
+          <label htmlFor="groupName">Group Name:</label>
+          <input
+            id="groupName"
+            className="modal-input"
+            value={groupName}
+            onChange={(e) => setGroupName(e.target.value)}
+            maxLength={25}
+            autoFocus
+            placeholder="Enter group Name"
+          />
+        </div>
+        <div className="form-row">
+          <label>Choose color:</label>
+          <div className="color-options">
+            {colors.map((color) => (
+              <span
+                key={color}
+                className={`color-circle${selectedColor === color ? " selected" : ""}`}
+                style={{ background: color }}
+                onClick={() => setSelectedColor(color)}
+              ></span>
+            ))}
           </div>
+        </div>
+        <div className="button-row">
+          <button className="create-btn" onClick={handleCreateGroup}>
+            Create
+          </button>
         </div>
       </Modal>
 
-      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+      <ToastContainer position="top-right" autoClose={2000} hideProgressBar />
     </div>
   );
 }

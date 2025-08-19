@@ -8,24 +8,28 @@ function Addnote() {
   const navigate = useNavigate();
   const [message, setMessage] = useState("");
   const [notes, setNotes] = useState([]);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 360);
+  // For responsive logic in your JS (if you want; CSS will handle layout)
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
 
+  // Get group info from localStorage
   const groups = JSON.parse(localStorage.getItem("groups")) || [];
   const selectedGroup = groups.find((group) => group.id === parseInt(id));
 
+  // Load notes for this group
   useEffect(() => {
     const notesKey = `notes-${id}`;
     const existingNotes = JSON.parse(localStorage.getItem(notesKey)) || [];
     setNotes(existingNotes);
   }, [id]);
 
-  // Update isMobile on window resize
+  // Handle responsiveness (optional; relies on CSS for layout)
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 360);
+    const handleResize = () => setIsMobile(window.innerWidth <= 600);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Handle send
   const handleSend = () => {
     if (!message.trim()) return;
     const notesKey = `notes-${id}`;
@@ -37,6 +41,7 @@ function Addnote() {
     setMessage("");
   };
 
+  // Send on Enter (but not Shift+Enter)
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -44,89 +49,47 @@ function Addnote() {
     }
   };
 
-  return (
-    <>
-      {/* Top section */}
-      <div
-        className="top"
-        style={{
-          backgroundColor: "#16008B",
-          height: "100px",
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          padding: "0 20px",
-          color: "white",
-          position: "fixed",
-          top: 0,
-          zIndex: 1000,
-        }}
-      >
-        {/* Back arrow only on mobile */}
-        {isMobile && (
-          <div
-            onClick={() => navigate("/")}
-            style={{
-              fontSize: "30px",
-              fontWeight:'bold',
-              cursor: "pointer",
-              marginRight: "15px",
-              display: "flex",
-              alignItems: "center",
-              color: "white",
-            }}
-          >
-            ←
-          </div>
-        )}
-
-        {/* Group circle */}
-        <div
-          style={{
-            backgroundColor: selectedGroup?.color,
-            borderRadius: "50%",
-            width: "70px",
-            height: "70px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: "bold",
-            fontSize: "30px",
-            marginRight: "15px",
-          }}
-        >
-          {selectedGroup?.initials}
+  if (!selectedGroup) {
+    return (
+      <div className="note">
+        <div className="top">
+          <button className="back-btn" onClick={() => navigate(-1)}>
+            &larr;
+          </button>
+          <span className="group-title">Group Not Found</span>
         </div>
+        <div className="content">The group does not exist.</div>
+      </div>
+    );
+  }
 
-        {/* Group name */}
-        <h3 style={{ fontSize: "30px" }}>{selectedGroup?.name}</h3>
+  return (
+    <div className="note">
+      {/* Top header bar */}
+      <div className="top">
+        <button className="back-btn" onClick={() => navigate(-1)}>&larr;</button>
+        <span className="group-icon" style={{ background: selectedGroup.color }}>
+          {selectedGroup.initials}
+        </span>
+        <span className="group-title">{selectedGroup.name}</span>
       </div>
 
-      {/* Notes section */}
-      <div className="note" style={{ marginTop: "10vh", position: "fixed" }}>
-        <MessageList message={notes} />
+      {/* Messages */}
+      <MessageList message={notes} />
 
-        {selectedGroup && (!isMobile || (isMobile && selectedGroup)) && (
-          <div className="addnote">
-            <div className="text" style={{ display: "flex",height:'120px' }}>
-              <textarea
-                placeholder="Enter your text here........"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyDown={handleKeyDown}
-                style={{
-                  resize: "none",
-                  border: "none",
-                  outline: "none",
-                  flex: 1,
-                  padding: "10px 20px",
-                  fontSize:  isMobile ? "15px" : "20px",
-                  marginTop:"-40px",
-                  fontFamily: "roboto",
-                  overflow: "hidden",
-                }}
-              />
-              <button
+      {/* Add note input at the bottom */}
+      <div className="addnote">
+        <div className="text">
+          <textarea
+            className="note-input"
+            placeholder="Enter your text here..."
+            value={message}
+            rows={isMobile ? 1 : 2}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            autoFocus
+          />
+          <button
                 onClick={handleSend}
                 disabled={!message.trim()}
                 style={{
@@ -136,17 +99,15 @@ function Addnote() {
                   padding: "30px 8px",
                   fontSize: "25px",
                   color: message.trim() ? "#16008B" : "#ABABAB",
-                  marginTop: "50px",
+                  marginTop: "5px",
                   marginRight: "15px",
                 }}
               >
                 ➤
               </button>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 
